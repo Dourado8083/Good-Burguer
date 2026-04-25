@@ -1,0 +1,91 @@
+@page "/pedidos"
+@using GoodBurger.Shared
+@inject HttpClient Http
+@inject NavigationManager Nav
+
+<PageTitle>Novo Pedido</PageTitle>
+
+<h3>🍔 Finalizar Pedido</h3>
+
+@if (itensCardapio == null)
+{
+    <p><em>Carregando opções de lanches...</em></p>
+}
+else
+{
+    <EditForm Model="@pedido" OnValidSubmit="Enviar">
+        <div class="mb-3">
+            <label>Escolha seu Lanche:</label>
+            <InputSelect @bind-Value="pedido.SanduicheNome" class="form-control">
+                <option value="">Selecione um lanche...</option>
+                
+                @foreach (var lanche in itensCardapio.Where(x => x.Categoria == "Sanduiche" || string.IsNullOrEmpty(x.Categoria)))
+                {
+                    <option value="@lanche.Nome">@lanche.Nome - (@lanche.Preco.ToString("C"))</option>
+                }
+            </InputSelect>
+        </div>
+
+        <div class="form-check mb-2">
+            <InputCheckbox @bind-Value="pedido.TemBatata" class="form-check-input" id="chkBatata" />
+            <label class="form-check-label" for="chkBatata">🍟 Adicionar Batata (+ R$ 2,00)</label>
+        </div>
+
+        <div class="form-check mb-2">
+            <InputCheckbox @bind-Value="pedido.TemRefrigerante" class="form-check-input" id="chkRefri" />
+            <label class="form-check-label" for="chkRefri">🥤 Adicionar Refrigerante (+ R$ 2,50)</label>
+        </div>
+        @*Botão de Envio com Validação para se existe pelo menos um lanche para fazer o pedido*@
+        <button type="submit" 
+                disabled="@(string.IsNullOrEmpty(pedido.SanduicheNome))" 
+                class="btn btn-primary mt-3 w-100">
+            Confirmar Pedido 🚀
+        </button>
+    </EditForm>
+}
+
+@if (resumo != null)
+{
+    <div class="alert alert-success mt-4 shadow">
+        <h5>✅ Pedido Confirmado!</h5>
+        <hr />
+        <p>Lanche: <strong>@resumo.SanduicheNome</strong></p>
+        <p>Subtotal: @resumo.Subtotal.ToString("C")</p>
+        <p class="text-danger">Desconto Aplicado: - @resumo.Desconto.ToString("C")</p>
+        <p class="fs-4"><strong>Total Final: @resumo.TotalFinal.ToString("C")</strong></p>
+
+        <button class="btn btn-outline-success btn-sm mt-2" @onclick="() => resumo = null">Fazer Novo Pedido</button>
+    </div>
+}
+
+@code {
+    [SupplyParameterFromQuery(Name = "lanche")]
+    public string? Lanche { get; set; }
+
+    private GoodBurger.Shared.Order pedido = new();
+    private GoodBurger.Shared.Order? resumo;
+    
+    // Lista para guardar os lanches vindo do MySQL
+    private List<GoodBurger.Shared.Menu>? itensCardapio;
+
+    protected override async Task OnInitializedAsync()
+    {
+        itensCardapio = await Http.GetFromJsonAsync<List<GoodBurger.Shared.Menu>>("api/Menu");
+
+        if (!string.IsNullOrEmpty(Lanche))
+        {
+            pedido.SanduicheNome = Lanche;
+        }
+    }
+
+    private async Task Enviar()
+    {
+        var response = await Http.PostAsJsonAsync("api/Order", pedido);
+
+        if (response.IsSuccessStatusCode)
+        {
+            resumo = await response.Content.ReadFromJsonAsync<GoodBurger.Shared.Order>();
+            pedido = new GoodBurger.Shared.Order();
+        }
+    }
+}

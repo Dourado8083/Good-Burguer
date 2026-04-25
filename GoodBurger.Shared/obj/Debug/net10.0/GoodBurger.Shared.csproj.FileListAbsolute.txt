@@ -1,0 +1,11 @@
+C:\Users\gusta\Desktop\goodbuger\GoodBurger.Shared\bin\Debug\net10.0\GoodBurger.Shared.deps.json
+C:\Users\gusta\Desktop\goodbuger\GoodBurger.Shared\bin\Debug\net10.0\GoodBurger.Shared.dll
+C:\Users\gusta\Desktop\goodbuger\GoodBurger.Shared\bin\Debug\net10.0\GoodBurger.Shared.pdb
+C:\Users\gusta\Desktop\goodbuger\GoodBurger.Shared\obj\Debug\net10.0\GoodBurger.Shared.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\gusta\Desktop\goodbuger\GoodBurger.Shared\obj\Debug\net10.0\GoodBurger.Shared.AssemblyInfoInputs.cache
+C:\Users\gusta\Desktop\goodbuger\GoodBurger.Shared\obj\Debug\net10.0\GoodBurger.Shared.AssemblyInfo.cs
+C:\Users\gusta\Desktop\goodbuger\GoodBurger.Shared\obj\Debug\net10.0\GoodBurger.Shared.csproj.CoreCompileInputs.cache
+C:\Users\gusta\Desktop\goodbuger\GoodBurger.Shared\obj\Debug\net10.0\GoodBurger.Shared.dll
+C:\Users\gusta\Desktop\goodbuger\GoodBurger.Shared\obj\Debug\net10.0\refint\GoodBurger.Shared.dll
+C:\Users\gusta\Desktop\goodbuger\GoodBurger.Shared\obj\Debug\net10.0\GoodBurger.Shared.pdb
+C:\Users\gusta\Desktop\goodbuger\GoodBurger.Shared\obj\Debug\net10.0\ref\GoodBurger.Shared.dll

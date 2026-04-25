@@ -1,0 +1,150 @@
+@page "/admin"
+@using GoodBurger.Shared
+@inject HttpClient Http
+
+<div class="container mt-4">
+    <h3 class="mb-4">🛡️ Painel Administrativo - Good Burger</h3>
+
+    <div class="card mb-4 bg-light">
+        <div class="card-body d-flex justify-content-between align-items-center">
+            <span>Status do Perfil: <strong>@(isAdmin ? "ADMINISTRADOR" : "CLIENTE")</strong></span>
+            <button class="btn btn-sm @(isAdmin ? "btn-danger" : "btn-dark")" @onclick="() => isAdmin = !isAdmin">
+                @(isAdmin ? "Sair do Modo Admin" : "Ativar Modo Admin")
+            </button>
+        </div>
+    </div>
+
+    @if (isAdmin)
+    {
+        <div class="row">
+            <div class="col-md-5">
+                <div class="card shadow-sm border-primary">
+                    <div class="card-header bg-primary text-white font-weight-bold">Novo Item no Cardápio</div>
+                    <div class="card-body">
+                        <EditForm Model="@novoItem" OnValidSubmit="Salvar">
+                            <div class="mb-3">
+                                <label class="form-label">Nome do Lanche:</label>
+                                <InputText @bind-Value="novoItem.Nome" class="form-control" placeholder="Ex: X-Salada" />
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label">Preço (R$):</label>
+                                <InputNumber @bind-Value="novoItem.Preco" class="form-control" />
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label">Categoria:</label>
+                                <InputSelect @bind-Value="novoItem.Categoria" class="form-select">
+                                    <option value="Sanduiche">Sanduíche</option>
+                                    <option value="Acompanhamento">Acompanhamento</option>
+                                    <option value="Bebida">Bebida</option>
+                                </InputSelect>
+                            </div>
+
+                            @* Exibição da mensagem de erro de duplicidade *@
+                            @if (!string.IsNullOrEmpty(mensagemErro))
+                            {
+                                <div class="alert alert-danger py-2 mb-3">
+                                    <small>⚠️ @mensagemErro</small>
+                                </div>
+                            }
+
+                            <button type="submit" 
+                                    disabled="@(string.IsNullOrEmpty(novoItem.Nome) || string.IsNullOrEmpty(novoItem.Categoria) || novoItem.Preco <= 0)" 
+                                    class="btn btn-success w-100">
+                                Adicionar Novo Item
+                            </button>
+                        </EditForm>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-7">
+                <div class="card shadow-sm">
+                    <div class="card-header bg-secondary text-white">Gerenciar Itens</div>
+                    <ul class="list-group list-group-flush">
+                        @if (itens == null)
+                        {
+                            <li class="list-group-item text-center">Carregando banco de dados...</li>
+                        }
+                        else if (!itens.Any())
+                        {
+                            <li class="list-group-item text-center text-muted">Nenhum item cadastrado.</li>
+                        }
+                        else
+                        {
+                            @foreach (var item in itens)
+                            {
+                                <li class="list-group-item d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <span class="badge bg-info text-dark me-2">@item.Categoria</span>
+                                        <strong>@item.Nome</strong> 
+                                        <span class="text-muted ms-2">@item.Preco.ToString("C")</span>
+                                    </div>
+                                    <button class="btn btn-outline-danger btn-sm" @onclick="() => DeletarLanche(item.Id)">
+                                        🗑️ Excluir
+                                    </button>
+                                </li>
+                            }
+                        }
+                    </ul>
+                </div>
+            </div>
+        </div>
+    }
+    else
+    {
+        <div class="alert alert-warning text-center mt-5">
+            <h4>Acesso Negado</h4>
+            <p>Consulte um funcionário ou desenvolvedor para verificar o que aconteceu.</p>
+        </div>
+    }
+</div>
+
+@code {
+    private bool isAdmin = false;
+    private string? mensagemErro;
+    private GoodBurger.Shared.Menu novoItem = new() { Categoria = "Sanduiche" };
+    private List<GoodBurger.Shared.Menu>? itens;
+
+    protected override async Task OnInitializedAsync() => await AtualizarLista();
+
+    private async Task AtualizarLista()
+    {
+        itens = await Http.GetFromJsonAsync<List<GoodBurger.Shared.Menu>>("api/Menu");
+    }
+
+    private async Task Salvar()
+    {
+        mensagemErro = null; // Limpa erros anteriores
+
+        // Verifica se o item já existe na lista (Case Insensitive)
+        if (itens != null && itens.Any(i => i.Nome.Trim().Equals(novoItem.Nome.Trim(), StringComparison.OrdinalIgnoreCase)))
+        {
+            mensagemErro = $"O item '{novoItem.Nome}' já existe no cardápio!";
+            return; 
+        }
+
+        var res = await Http.PostAsJsonAsync("api/Menu", novoItem);
+        
+        if (res.IsSuccessStatusCode)
+        {
+            novoItem = new GoodBurger.Shared.Menu() { Categoria = "Sanduiche" };
+            await AtualizarLista(); 
+        }
+        else
+        {
+            mensagemErro = "Erro ao salvar o item. Tente novamente.";
+        }
+    }
+
+    private async Task DeletarLanche(int id)
+    {
+        var res = await Http.DeleteAsync($"api/Menu/{id}");
+        
+        if (res.IsSuccessStatusCode)
+        {
+            await AtualizarLista(); 
+        }
+    }
+}

@@ -1,0 +1,95 @@
+@page "/cardapio"
+@using GoodBurger.Shared
+@inject HttpClient Http
+@inject NavigationManager Nav
+
+<PageTitle>Cardápio</PageTitle>
+
+<div class="container mt-4">
+    <h2 class="mb-4 text-center">🍔 Cardápio Good Burger</h2>
+
+    <div class="alert alert-info mt-4">
+        <strong>🏷️ Combos com desconto:</strong><br />
+        🥪 + 🍟 + 🥤 → <strong>20% off</strong><br />
+        🥪 + 🥤 → <strong>15% off</strong><br />
+        🥪 + 🍟 → <strong>10% off</strong>
+    </div>
+        
+    @if (itensMenu == null)
+    {
+        <p class="text-center">Carregando...</p>
+    }
+    else
+    {
+        @* Agrupamos por categoria. Se a categoria for nula no banco, chamamos de "Geral" *@
+        @foreach (var categoria in itensMenu.GroupBy(x => x.Categoria ?? "Geral"))
+        {
+            <h4 class="mt-4 border-bottom pb-2">
+                @switch (categoria.Key)
+                {
+                    case "Sanduiche": <span>🥪 Sanduíches</span> break;
+                    case "Acompanhamento": <span>🍟 Acompanhamentos</span> break;
+                    case "Bebida": <span>🥤 Bebidas</span> break;
+                    default: <span>✨ Novidades</span> break;
+                }
+            </h4>
+
+            <div class="row">
+                @foreach (var item in categoria)
+                {
+                    <div class="col-md-4 mb-3">
+                        <div class="card shadow-sm h-100 border-primary">
+                            <div class="card-body d-flex flex-column">
+                                <h5 class="card-title">@item.Nome</h5>
+                                
+                                <p class="text-muted small flex-grow-1">
+                                    @(ObterDescricao(item.Nome))
+                                </p>
+
+                                <div class="d-flex justify-content-between align-items-center mt-auto">
+                                    <span class="badge bg-success fs-6">@item.Preco.ToString("C")</span>
+                                    @if (item.Categoria == "Sanduiche" || string.IsNullOrEmpty(item.Categoria) || item.Categoria == "Geral")
+                                    {
+                                        <button class="btn btn-outline-primary btn-sm"
+                                                @onclick="() => SelecionarLanche(item.Nome)">
+                                            Selecionar 🛒
+                                        </button>
+                                    }
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+        }
+    }
+</div>
+
+@code {
+    private List<GoodBurger.Shared.Menu>? itensMenu;
+
+    protected override async Task OnInitializedAsync()
+    {
+
+        itensMenu = await Http.GetFromJsonAsync<List<GoodBurger.Shared.Menu>>("api/Menu");
+    }
+
+    private void SelecionarLanche(string nome)
+    {
+        Nav.NavigateTo($"/pedidos?lanche={Uri.EscapeDataString(nome)}");
+    }
+
+    private string ObterDescricao(string nome)
+    {
+        return nome switch
+        {
+            "X Burger" => "Hambúrguer, queijo, alface e tomate",
+            "X Egg" => "Hambúrguer, ovo, queijo e alface",
+            "X Bacon" => "Hambúrguer, bacon, queijo e molho especial",
+            "Batata frita" => "Porção de batatas fritas crocantes",
+            "Refrigerante" => "Coca-Cola, Guaraná ou Suco — 350ml",
+            "X-salada" => "Hambúrguer artesanal com salada fresca e maionese",
+            _ => "Novo item exclusivo do nosso cardápio!"
+        };
+    }
+}

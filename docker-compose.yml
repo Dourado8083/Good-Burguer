@@ -1,0 +1,29 @@
+services:
+  db:
+    image: mysql:8.0
+    restart: always
+    environment:
+      MYSQL_DATABASE: 'goodburger'
+      MYSQL_ROOT_PASSWORD: 'root'
+    ports:
+      - '3306:3306'
+
+  api:
+    build:
+      context: .
+      dockerfile: GoodBurger.Api/Dockerfile
+    ports:
+      - '5000:8080'
+    depends_on:
+      - db
+    environment:
+      - ConnectionStrings__DefaultConnection=Server=db;Database=goodburger;Uid=root;Pwd=sua_senha_aqui;
+
+  web:
+    build:
+      context: .
+      dockerfile: GoodBurger.Web/Dockerfile
+    ports:
+      - '8080:80'
+    depends_on:
+      - api
